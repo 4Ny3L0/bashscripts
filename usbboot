@@ -1,0 +1,162 @@
+#!/bin/bash
+#variables
+c=0 #contador del while si su valor es 0 permanecerá pidiendo USB si su valor es 1 se rompe el While
+contador=0 #
+contador1=0
+x=0
+p1=p
+emp1=0
+empv=0;
+#Fin de las Variables
+cd /home/gutierrez/Desktop/ISOS/ #carpeta donde se almacenan las Imagenes ISO
+figlet "Script USB Booteable" #imprime un banner
+echo ""
+echo ""
+echo "Inserta un Pendrive ... O presiona Ctrl+z para salir"
+echo ""
+#ciclo while que detecta si existe un Pendrive conectado o no
+while [ $c -le 0 ];do #mientras C sea cero se ejecutara los siguiente
+lsblk -lt | grep sd | cut -d "0" -f 1 > dispositivos.txt #crea un archivo txt con los dispositivos que tengan una relacion con la palabra sd
+sed -i "1,2d" dispositivos.txt #corta los dos primeros valores en el archivo, que son particiones del sistema
+cantidadD=$(cat dispositivos.txt | wc -l ) #cuenta la cantidad de valores que tiene el archivo dispositivos.txt
+dispositivo=$(cat dispositivos.txt)  #almacena el valor resultante del cat al archivo dispositivos
+
+#primera condicion si $cantidadD es igual a 0 el valor de $c sera igual a 0, el while seguira pidiendo prendrive 
+if  [ $cantidadD -eq 0 ];  then #if que controla el contador del while, dependiendo del valor de la variable cantidadD
+c=0
+rm dispositivos.txt #borrar el archvio dispositivos.txt
+
+##############################################################################################################################
+#segunda condición, esta se encarga de preguntar si la variable $cantidadD tiene un solo valor en este caso a $c se le asignara
+#--- el valor 1 y el while se dejara de ejecutar, y el OS comenzará a ser grabado en el pendrive.
+elif [ $cantidadD -eq 1 ]; then 
+c=1
+reset
+figlet "Script USB Booteable"
+#echo "Dispositivos Disponibles"
+echo ""
+echo ""
+echo "06101996G" | sudo -S umount  /dev/$dispositivo # se encarga de desmontar el dispositivo detectado
+reset
+figlet  "Script USB Booteable"
+echo ""
+while [ $contador1 -le 0 ]; 
+do
+echo "Versiones de la ISO Disponibles:"
+echo ""
+ls | grep emp > isos.txt
+cantidadisos=$(cat isos.txt | wc -l)
+cat -n isos.txt
+echo ""
+echo "Escribe el numero correspondiente a la Version de la ISO que quieres instalar en el USB O Presiona Crtl+Z para salir:"
+#
+echo ""
+while [ $x -le 0 ];do
+read emp
+
+for ((c1=1; c1<=$cantidadisos; c1++))
+do
+if [ $emp -eq $c1 ]; then
+x=1
+c1=100
+emp1=$emp$p1
+empv=$(sed -n $emp1 isos.txt)
+contador1=1
+else
+x=0
+fi
+done
+
+if [ $x -eq 0 ];then
+reset
+figlet  "Script USB Booteable"
+echo " "
+echo "Versiones de la ISO Disponibles:"
+echo " "
+cat -n isos.txt
+echo " "
+echo "Por favor ingresa un numero existente en la lista: "
+fi
+done
+reset
+done
+
+echo "Generando USB Booteable"
+echo " "
+echo $empv
+echo "06101996G" | sudo -S dd if=$empv of=/dev/$dispositivo bs=4M status=progress
+sync 
+echo ""
+figlet -c "La generacion de la USB booteable ha finalizado"
+rm dispositivos.txt
+echo " "
+echo "Puedes extraer el Pendrive"
+beep -r 25
+###########################################################################################
+else 
+#Tercera condición, esta se encarga de preguntar si la variable $cantidadD tiene mas de un valor en este caso a $c se le asignara
+#--- el valor 1 y el while se dejara de ejecutar, y el OS comenzará a grabar la ISO en el pendrive.
+c=1
+reset
+#figlet -c "Script USB Booteable"
+#echo "existe" usado para Debug
+#Para debug
+echo ""
+echo ""
+
+echo "06101996G" | sudo -S umount -f /dev/$dispositivo
+reset
+figlet  "Script USB Booteable"
+echo ""
+#while usado para pedir al usuario una version del ISO
+while [ $contador1 -le 0 ]; 
+do
+echo "Versiones de la ISO Disponibles:"
+echo ""
+dispositivo=$(sed -n 1p dispositivos.txt)
+ls | grep emp > isos.txt
+cantidadisos=$(cat isos.txt | wc -l)
+cat -n isos.txt
+echo ""
+echo "Escribe el numero correspondiente a la Version de la ISO que quieres instalar en el USB O Presiona Crtl+z para salir:"
+#
+echo ""
+while [ $x -le 0 ];do
+read emp
+
+for ((c1=1; c1<=$cantidadisos; c1++))
+do
+if [ $emp -eq $c1 ]; then
+x=1
+c1=100
+emp1=$emp$p1
+empv=$(sed -n $emp1 isos.txt)
+contador1=1
+else
+x=0
+fi
+done
+
+if [ $x -eq 0 ];then
+reset
+figlet  "Script USB Booteable"
+cat -n isos.txt
+echo " "
+echo "Por favor ingresa un numero existente en la lista: "
+fi
+done
+reset
+done
+figlet "Generando USB Booteable"
+echo " "
+echo $empv
+echo "06101996G" | sudo -S dd if=$empv of=/dev/$dispositivo bs=4M status=progress
+sync 
+echo ""
+figlet -c "La generacion de la USB booteable ha finalizado"
+rm dispositivos.txt
+echo " "
+echo "Puedes extraer el Pendrive"
+beep -r 15
+fi
+done

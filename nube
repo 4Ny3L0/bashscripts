@@ -1,0 +1,9 @@
+#!/bin/bash
+cd /home/gutierrez/Desktop/certificados
+
+echo "estas aqui" `pwd`
+echo "conectando al AWS de LEMP"
+echo "Escribe la direccion IP del ambiente AWS:"
+read ip
+echo "06101996G" | sudo -S konsole -e "bash -c \"ssh -i infra.pem ec2-user@$ip; exec bash\""
+exit
